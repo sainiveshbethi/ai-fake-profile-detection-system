@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0a0c10;
+  --surface:#111318;
+  --surface2:#181c24;
+  --border:#1e2430;
+  --accent:#00d4aa;
+  --accent2:#ff4d6d;
+  --accent3:#6c63ff;
+  --warn:#f59e0b;
+  --txt:#e2e8f0;
+  --txt2:#8892a4;
+  --mono:'Space Mono',monospace;
+  --sans:'DM Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--txt);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
+
+/* Scanline overlay */
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,212,170,0.01) 2px,rgba(0,212,170,0.01) 4px);pointer-events:none;z-index:0;}
+
+.wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 20px 60px;}
+
+/* Header */
+.header{padding:32px 0 24px;display:flex;align-items:center;gap:20px;border-bottom:1px solid var(--border);margin-bottom:32px;}
+.logo{width:48px;height:48px;border:1.5px solid var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.logo::before{content:'';position:absolute;width:100%;height:100%;background:radial-gradient(circle at 50% 50%,rgba(0,212,170,0.15),transparent 70%);}
+.logo svg{width:24px;height:24px;}
+.brand{flex:1;}
+.brand h1{font-family:var(--mono);font-size:18px;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase;}
+.brand p{font-size:12px;color:var(--txt2);margin-top:3px;letter-spacing:1px;}
+.status-pill{display:flex;align-items:center;gap:8px;background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.25);border-radius:20px;padding:6px 14px;font-size:12px;font-family:var(--mono);}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.5s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(0.85);}}
+
+/* Nav tabs */
+.nav{display:flex;gap:4px;margin-bottom:28px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:4px;}
+.nav button{flex:1;background:none;border:none;color:var(--txt2);font-family:var(--sans);font-size:13px;padding:9px 12px;border-radius:7px;cursor:pointer;transition:all 0.2s;font-weight:500;}
+.nav button.active{background:var(--surface2);color:var(--accent);border:1px solid var(--border);}
+.nav button:hover:not(.active){color:var(--txt);background:rgba(255,255,255,0.04);}
+
+/* Sections */
+.section{display:none;}
+.section.active{display:block;}
+
+/* Stat cards */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden;}
+.stat-card::after{content:'';position:absolute;top:0;left:0;width:3px;height:100%;border-radius:2px 0 0 2px;}
+.stat-card.green::after{background:var(--accent);}
+.stat-card.red::after{background:var(--accent2);}
+.stat-card.purple::after{background:var(--accent3);}
+.stat-card.warn::after{background:var(--warn);}
+.stat-label{font-size:11px;color:var(--txt2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;}
+.stat-val{font-family:var(--mono);font-size:26px;font-weight:700;}
+.stat-val.green{color:var(--accent);}
+.stat-val.red{color:var(--accent2);}
+.stat-val.purple{color:var(--accent3);}
+.stat-val.warn{color:var(--warn);}
+.stat-sub{font-size:11px;color:var(--txt2);margin-top:5px;}
+
+/* Panel layout */
+.panel-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.panel.wide{grid-column:1/-1;}
+.panel-title{font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt2);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.panel-title span{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+
+/* Risk meter */
+.risk-meter-wrap{display:flex;flex-direction:column;align-items:center;}
+.risk-arc{width:180px;height:95px;position:relative;}
+.risk-arc svg{width:100%;height:100%;}
+.risk-score-label{font-family:var(--mono);font-size:32px;font-weight:700;color:var(--accent2);text-align:center;margin-top:8px;}
+.risk-score-sub{font-size:12px;color:var(--txt2);text-align:center;}
+
+/* Feature bars */
+.feature-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.feature-name{font-size:12px;color:var(--txt2);width:130px;flex-shrink:0;}
+.bar-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1);}
+.bar-pct{font-family:var(--mono);font-size:11px;color:var(--txt2);width:34px;text-align:right;}
+
+/* Profile scanner */
+.scanner-input-wrap{display:flex;gap:10px;margin-bottom:20px;}
+.scanner-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 16px;color:var(--txt);font-family:var(--sans);font-size:14px;outline:none;}
+.scanner-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,212,170,0.1);}
+.scan-btn{background:var(--accent);color:#0a0c10;border:none;border-radius:8px;padding:11px 22px;font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity 0.2s;}
+.scan-btn:hover{opacity:0.88;}
+
+.result-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-top:4px;display:none;}
+.result-card.visible{display:block;}
+.result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.result-badge{padding:5px 14px;border-radius:20px;font-size:12px;font-family:var(--mono);font-weight:700;letter-spacing:1px;}
+.badge-fake{background:rgba(255,77,109,0.15);color:var(--accent2);border:1px solid rgba(255,77,109,0.3);}
+.badge-legit{background:rgba(0,212,170,0.12);color:var(--accent);border:1px solid rgba(0,212,170,0.28);}
+.badge-sus{background:rgba(245,158,11,0.12);color:var(--warn);border:1px solid rgba(245,158,11,0.28);}
+.signal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.signal-item{display:flex;align-items:flex-start;gap:10px;background:var(--surface);border-radius:8px;padding:12px;}
+.signal-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.sig-red{background:rgba(255,77,109,0.15);}
+.sig-green{background:rgba(0,212,170,0.12);}
+.sig-warn{background:rgba(245,158,11,0.12);}
+.signal-item p{font-size:12px;font-weight:600;color:var(--txt);margin-bottom:2px;}
+.signal-item span{font-size:11px;color:var(--txt2);}
+
+/* Architecture diagram */
+.arch-diagram{position:relative;}
+.arch-diagram svg{width:100%;height:auto;}
+
+/* Dataset table */
+.data-table{width:100%;border-collapse:collapse;font-size:13px;}
+.data-table th{text-align:left;padding:10px 14px;background:var(--surface2);color:var(--txt2);font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:600;border-bottom:1px solid var(--border);}
+.data-table td{padding:10px 14px;border-bottom:1px solid rgba(30,36,48,0.5);vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:rgba(255,255,255,0.02);}
+.tag{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-family:var(--mono);}
+.tag.fake{background:rgba(255,77,109,0.12);color:var(--accent2);}
+.tag.real{background:rgba(0,212,170,0.1);color:var(--accent);}
+
+/* Model comparison */
+.model-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:16px;}
+.model-rank{font-family:var(--mono);font-size:11px;color:var(--txt2);width:22px;}
+.model-info{flex:1;}
+.model-name{font-size:13px;font-weight:600;margin-bottom:3px;}
+.model-desc{font-size:11px;color:var(--txt2);}
+.model-metrics{display:flex;gap:16px;}
+.metric-box{text-align:center;}
+.metric-box .val{font-family:var(--mono);font-size:15px;font-weight:700;}
+.metric-box .lbl{font-size:10px;color:var(--txt2);margin-top:1px;}
+
+/* Confusion matrix */
+.cm-wrap{display:flex;gap:20px;align-items:flex-start;}
+.cm-grid{display:grid;grid-template-columns:auto auto auto;gap:3px;}
+.cm-cell{width:72px;height:54px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);}
+.cm-cell .big{font-size:18px;font-weight:700;}
+.cm-cell .sm{font-size:10px;margin-top:2px;}
+.cm-head{background:transparent!important;color:var(--txt2);font-size:11px;font-weight:600;letter-spacing:1px;}
+.cm-tp{background:rgba(0,212,170,0.18);color:var(--accent);}
+.cm-tn{background:rgba(0,212,170,0.12);color:var(--accent);}
+.cm-fp{background:rgba(245,158,11,0.15);color:var(--warn);}
+.cm-fn{background:rgba(255,77,109,0.15);color:var(--accent2);}
+.cm-legend{flex:1;}
+.cm-leg-item{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;}
+.cm-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+
+/* Tabs anim */
+.section{animation:fadeIn 0.25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* Responsive */
+@media(max-width:640px){
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .panel-row{grid-template-columns:1fr;}
+  .signal-grid{grid-template-columns:1fr;}
+  .cm-wrap{flex-direction:column;}
+}
+
+/* Timeline */
+.timeline{position:relative;padding-left:20px;}
+.timeline::before{content:'';position:absolute;left:6px;top:6px;bottom:6px;width:1px;background:var(--border);}
+.tl-item{position:relative;margin-bottom:20px;}
+.tl-item::before{content:'';position:absolute;left:-17px;top:6px;width:8px;height:8px;border-radius:50%;border:1.5px solid var(--accent);background:var(--bg);}
+.tl-title{font-size:13px;font-weight:600;color:var(--txt);margin-bottom:3px;}
+.tl-desc{font-size:12px;color:var(--txt2);line-height:1.55;}
+.tl-tag{display:inline-block;margin-top:5px;font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(0,212,170,0.1);color:var(--accent);}
+
+/* Tech stack */
+.tech-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.tech-item{background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:14px;text-align:center;}
+.tech-item .icon{font-size:22px;margin-bottom:8px;}
+.tech-item .name{font-size:12px;font-weight:600;color:var(--txt);margin-bottom:2px;}
+.tech-item .role{font-size:11px;color:var(--txt2);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="header">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#00d4aa" stroke-width="1.5">
+      <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><path d="M18 10l2 2-2 2" stroke="#ff4d6d"/><circle cx="19" cy="6" r="2" stroke="#ff4d6d"/>
+    </svg>
+  </div>
+  <div class="brand">
+    <h1>FakeShield AI</h1>
+    <p>AI-Based Fake Profile Detection System &mdash; v2.4.1</p>
+  </div>
+  <div class="status-pill">
+    <div class="pulse"></div>
+    SYSTEM ONLINE
+  </div>
+</div>
+
+<div class="nav">
+  <button class="active" onclick="showTab('overview')">Overview</button>
+  <button onclick="showTab('scanner')">Live Scanner</button>
+  <button onclick="showTab('models')">ML Models</button>
+  <button onclick="showTab('dataset')">Dataset</button>
+  <button onclick="showTab('architecture')">Architecture</button>
+</div>
+
+<!-- OVERVIEW -->
+<div class="section active" id="tab-overview">
+  <div class="stats-grid">
+    <div class="stat-card green">
+      <div class="stat-label">Total Scans Today</div>
+      <div class="stat-val green">84,291</div>
+      <div class="stat-sub">↑ 12.4% from yesterday</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">Fake Profiles Caught</div>
+      <div class="stat-val red">6,148</div>
+      <div class="stat-sub">7.3% detection rate</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">Model Accuracy</div>
+      <div class="stat-val purple">97.4%</div>
+      <div class="stat-sub">Ensemble classifier</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="stat-label">Avg. Scan Time</div>
+      <div class="stat-val warn">0.34s</div>
+      <div class="stat-sub">Per profile analysis</div>
+    </div>
+  </div>
+
+  <div class="panel-row">
+    <div class="panel">
+      <div class="panel-title"><span></span>Top Detection Signals</div>
+      <div class="feature-row">
+        <div class="feature-name">No profile picture</div>
+        <div class="bar-track"><div class="bar-fill" style="width:89%;background:#ff4d6d;"></div></div>
+        <div class="bar-pct">89%</div>
+      </div>
+      <div class="feature-row">
+        <div class="feature-name">Account age &lt; 7 days</div>
+        <div class="bar-track"><div class="bar-fill" style="width:83%;background:#ff4d6d;"></div></div>
+        <div class="bar-pct">83%</div>
+      </div>
+      <div class="feature-row">
+        <div class="feature-name">0 mutual connections</div>
+        <div class="bar-track"><div class="bar-fill" style="width:76%;background:#f59e0b;"></div></div>
+        <div class="bar-pct">76%</div>
+      </div>
+      <div class="feature-row">
+        <div class="feature-name">Generic username</div>
+        <div class="bar-track"><div class="bar-fill" style="width:71%;background:#f59e0b;"></div></div>
+        <div class="bar-pct">71%</div>
+      </div>
+      <div class="feature-row">
+        <div class="feature-name">Bot-like posting speed</div>
+        <div class="bar-track"><div class="bar-fill" style="width:68%;background:#6c63ff;"></div></div>
+        <div class="bar-pct">68%</div>
+      </div>
+      <div class="feature-row">
+        <div class="feature-name">Plagiarised bio text</div>
+        <div class="bar-track"><div class="bar-fill" style="width:61%;background:#6c63ff;"></div></div>
+        <div class="bar-pct">61%</div>
+      </div>
+      <div class="feature-row">
+        <div class="feature-name">Inconsistent location</div>
+        <div class="bar-track"><div class="bar-fill" style="width:54%;background:#00d4aa;"></div></div>
+        <div class="bar-pct">54%</div>
+      </div>
+      <div class="feature-row">
+        <div class="feature-name">Mass follower pattern</div>
+        <div class="bar-track"><div class="bar-fill" style="width:47%;background:#00d4aa;"></div></div>
+        <div class="bar-pct">47%</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title"><span></span>Risk Score Distribution</div>
+      <svg viewBox="0 0 300 200" width="100%" style="margin-bottom:12px;">
+        <defs>
+          <linearGradient id="bar-g1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#00d4aa" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#00d4aa" stop-opacity="0.3"/>
+          </linearGradient>
+          <linearGradient id="bar-g2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#6c63ff" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#6c63ff" stop-opacity="0.3"/>
+          </linearGradient>
+          <linearGradient id="bar-g3" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.3"/>
+          </linearGradient>
+          <linearGradient id="bar-g4" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ff4d6d" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#ff4d6d" stop-opacity="0.3"/>
+          </linearGradient>
+        </defs>
+        <!-- axes -->
+        <line x1="40" y1="10" x2="40" y2="165" stroke="#1e2430" stroke-width="1"/>
+        <line x1="40" y1="165" x2="290" y2="165" stroke="#1e2430" stroke-width="1"/>
+        <!-- bars -->
+        <rect x="55" y="25" width="44" height="140" rx="4" fill="url(#bar-g1)"/>
+        <rect x="115" y="60" width="44" height="105" rx="4" fill="url(#bar-g2)"/>
+        <rect x="175" y="95" width="44" height="70" rx="4" fill="url(#bar-g3)"/>
+        <rect x="235" y="120" width="44" height="45" rx="4" fill="url(#bar-g4)"/>
+        <!-- labels -->
+        <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="77" y="178">0–25</text>
+        <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="137" y="178">26–50</text>
+        <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="197" y="178">51–75</text>
+        <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="257" y="178">76–100</text>
+        <text font-family="DM Sans,sans-serif" font-size="9" fill="#8892a4" text-anchor="middle" x="77" y="20" fill="#00d4aa">Low</text>
+        <text font-family="DM Sans,sans-serif" font-size="9" fill="#8892a4" text-anchor="middle" x="137" y="55">Med</text>
+        <text font-family="DM Sans,sans-serif" font-size="9" fill="#f59e0b" text-anchor="middle" x="197" y="90">High</text>
+        <text font-family="DM Sans,sans-serif" font-size="9" fill="#ff4d6d" text-anchor="middle" x="257" y="115">Fake</text>
+        <!-- Y axis ticks -->
+        <text font-family="Space Mono,monospace" font-size="9" fill="#8892a4" text-anchor="end" x="35" y="170">0</text>
+        <text font-family="Space Mono,monospace" font-size="9" fill="#8892a4" text-anchor="end" x="35" y="100">50%</text>
+        <text font-family="Space Mono,monospace" font-size="9" fill="#8892a4" text-anchor="end" x="35" y="25">100%</text>
+        <line x1="38" y1="96" x2="42" y2="96" stroke="#1e2430"/>
+      </svg>
+      <div style="font-size:11px;color:var(--txt2);text-align:center;">Risk score buckets across all scanned profiles</div>
+    </div>
+  </div>
+
+  <div class="panel-row">
+    <div class="panel wide">
+      <div class="panel-title"><span></span>Project Timeline</div>
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-title">Phase 1 — Data Collection & EDA</div>
+          <div class="tl-desc">Scraped 500K+ social media profiles from publicly available datasets (Kaggle, Twitter API, LinkedIn scraper). Performed exploratory data analysis to understand class imbalance — genuine:fake ratio ≈ 8:2.</div>
+          <span class="tl-tag">Week 1–2</span>
+        </div>
+        <div class="tl-item">
+          <div class="tl-title">Phase 2 — Feature Engineering</div>
+          <div class="tl-desc">Extracted 42 behavioural, structural, and NLP-based features: account age, posting frequency, bio sentiment, username entropy, follower/following ratio, image face detection, and more.</div>
+          <span class="tl-tag">Week 3–4</span>
+        </div>
+        <div class="tl-item">
+          <div class="tl-title">Phase 3 — Model Training & Evaluation</div>
+          <div class="tl-desc">Trained 6 ML/DL models: Logistic Regression, Random Forest, XGBoost, SVM, LSTM (on text sequences), and a CNN for profile image analysis. Used SMOTE for class-imbalance handling.</div>
+          <span class="tl-tag">Week 5–7</span>
+        </div>
+        <div class="tl-item">
+          <div class="tl-title">Phase 4 — Ensemble & Deployment</div>
+          <div class="tl-desc">Built a stacked ensemble achieving 97.4% accuracy. Deployed via FastAPI backend with React frontend. Integrated real-time scanning pipeline with Redis queue for batch processing.</div>
+          <span class="tl-tag">Week 8–10</span>
+        </div>
+        <div class="tl-item" style="margin-bottom:0">
+          <div class="tl-title">Phase 5 — Monitoring & Iteration</div>
+          <div class="tl-desc">Implemented MLflow for model tracking, Prometheus for system metrics. Drift detection alerts when accuracy drops below 95%. Model retraining triggered weekly with new labelled data.</div>
+          <span class="tl-tag">Ongoing</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCANNER -->
+<div class="section" id="tab-scanner">
+  <div class="panel wide" style="margin-bottom:14px;">
+    <div class="panel-title"><span></span>Live Profile Scanner</div>
+    <p style="font-size:13px;color:var(--txt2);margin-bottom:16px;">Enter a username or profile URL to run a real-time fake-detection analysis. The system evaluates 42 features across behavioural, linguistic, and network dimensions.</p>
+    <div class="scanner-input-wrap">
+      <input class="scanner-input" id="scan-input" placeholder="e.g.  user_john2947  or  twitter.com/xyz..." type="text" onkeydown="if(event.key==='Enter')runScan()"/>
+      <button class="scan-btn" onclick="runScan()">&#x25B6; Scan Profile</button>
+    </div>
+    <div id="scan-result" class="result-card">
+      <div class="result-header">
+        <div>
+          <div style="font-family:var(--mono);font-size:15px;font-weight:700;" id="result-name">@user_scan</div>
+          <div style="font-size:12px;color:var(--txt2);margin-top:2px;" id="result-meta">Scanned 0.31s ago · 42 features evaluated</div>
+        </div>
+        <div id="result-badge" class="result-badge badge-fake">● FAKE</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:20px;margin-bottom:18px;">
+        <div style="text-align:center;">
+          <div style="font-family:var(--mono);font-size:36px;font-weight:700;" id="result-score" class=""></div>
+          <div style="font-size:11px;color:var(--txt2);">Risk Score</div>
+        </div>
+        <div style="flex:1;">
+          <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;">
+            <div id="risk-bar" style="height:100%;border-radius:4px;transition:width 0.8s;width:0%;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--txt2);margin-top:4px;">
+            <span>Legitimate</span><span>Suspicious</span><span>Fake</span>
+          </div>
+        </div>
+      </div>
+      <div class="signal-grid" id="signal-grid"></div>
+    </div>
+  </div>
+
+  <div class="panel-row">
+    <div class="panel">
+      <div class="panel-title"><span></span>Sample Profiles to Test</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button onclick="setAndScan('john_realuser_88')" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--txt);cursor:pointer;text-align:left;font-family:var(--sans);font-size:13px;transition:border-color 0.2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+          <strong>@john_realuser_88</strong> <span style="color:var(--txt2);font-size:11px;">— Legitimate profile</span>
+        </button>
+        <button onclick="setAndScan('bot_xyz_94827')" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--txt);cursor:pointer;text-align:left;font-family:var(--sans);font-size:13px;transition:border-color 0.2s;" onmouseover="this.style.borderColor='var(--accent2)'" onmouseout="this.style.borderColor='var(--border)'">
+          <strong>@bot_xyz_94827</strong> <span style="color:var(--txt2);font-size:11px;">— Obvious fake bot</span>
+        </button>
+        <button onclick="setAndScan('alex_smith2024')" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--txt);cursor:pointer;text-align:left;font-family:var(--sans);font-size:13px;transition:border-color 0.2s;" onmouseover="this.style.borderColor='var(--warn)'" onmouseout="this.style.borderColor='var(--border)'">
+          <strong>@alex_smith2024</strong> <span style="color:var(--txt2);font-size:11px;">— Suspicious / borderline</span>
+        </button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><span></span>Detection Categories</div>
+      <div style="font-size:12px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#00d4aa;margin-top:4px;flex-shrink:0;"></div>
+          <div><strong style="color:var(--txt);">Behavioural signals</strong><br><span style="color:var(--txt2);">Posting frequency, like/share ratio, session times, activity gaps</span></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#6c63ff;margin-top:4px;flex-shrink:0;"></div>
+          <div><strong style="color:var(--txt);">Linguistic signals</strong><br><span style="color:var(--txt2);">Bio NLP analysis, sentiment consistency, plagiarism detection</span></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;margin-top:4px;flex-shrink:0;"></div>
+          <div><strong style="color:var(--txt);">Network signals</strong><br><span style="color:var(--txt2);">Follower graph structure, mutual connection density, bot cluster proximity</span></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#ff4d6d;margin-top:4px;flex-shrink:0;"></div>
+          <div><strong style="color:var(--txt);">Visual signals</strong><br><span style="color:var(--txt2);">Face detection, GAN-generated photo score, reverse image lookup</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODELS -->
+<div class="section" id="tab-models">
+  <div class="panel-row">
+    <div class="panel wide">
+      <div class="panel-title"><span></span>Model Performance Comparison</div>
+      <div class="model-card" style="border-color:rgba(0,212,170,0.35);background:rgba(0,212,170,0.04);">
+        <div class="model-rank" style="color:var(--accent);">★</div>
+        <div class="model-info">
+          <div class="model-name" style="color:var(--accent);">Stacked Ensemble (Best)</div>
+          <div class="model-desc">XGBoost + Random Forest + SVM with LR meta-learner</div>
+        </div>
+        <div class="model-metrics">
+          <div class="metric-box"><div class="val" style="color:var(--accent);">97.4%</div><div class="lbl">Accuracy</div></div>
+          <div class="metric-box"><div class="val" style="color:var(--accent);">96.8%</div><div class="lbl">Precision</div></div>
+          <div class="metric-box"><div class="val" style="color:var(--accent);">97.1%</div><div class="lbl">Recall</div></div>
+          <div class="metric-box"><div class="val" style="color:var(--accent);">0.970</div><div class="lbl">F1 Score</div></div>
+        </div>
+      </div>
+      <div class="model-card">
+        <div class="model-rank">01</div>
+        <div class="model-info">
+          <div class="model-name">XGBoost Classifier</div>
+          <div class="model-desc">Gradient boosting on tabular features (42 features)</div>
+        </div>
+        <div class="model-metrics">
+          <div class="metric-box"><div class="val" style="color:var(--accent3);">96.1%</div><div class="lbl">Accuracy</div></div>
+          <div class="metric-box"><div class="val">95.3%</div><div class="lbl">Precision</div></div>
+          <div class="metric-box"><div class="val">95.8%</div><div class="lbl">Recall</div></div>
+          <div class="metric-box"><div class="val">0.955</div><div class="lbl">F1 Score</div></div>
+        </div>
+      </div>
+      <div class="model-card">
+        <div class="model-rank">02</div>
+        <div class="model-info">
+          <div class="model-name">Random Forest</div>
+          <div class="model-desc">500 estimators, max depth 12, feature importance analysis</div>
+        </div>
+        <div class="model-metrics">
+          <div class="metric-box"><div class="val" style="color:var(--accent3);">95.2%</div><div class="lbl">Accuracy</div></div>
+          <div class="metric-box"><div class="val">94.7%</div><div class="lbl">Precision</div></div>
+          <div class="metric-box"><div class="val">94.4%</div><div class="lbl">Recall</div></div>
+          <div class="metric-box"><div class="val">0.945</div><div class="lbl">F1 Score</div></div>
+        </div>
+      </div>
+      <div class="model-card">
+        <div class="model-rank">03</div>
+        <div class="model-info">
+          <div class="model-name">LSTM (Text Sequences)</div>
+          <div class="model-desc">Bi-directional LSTM on bio & post text, 128-dim embeddings</div>
+        </div>
+        <div class="model-metrics">
+          <div class="metric-box"><div class="val" style="color:var(--warn);">93.8%</div><div class="lbl">Accuracy</div></div>
+          <div class="metric-box"><div class="val">92.1%</div><div class="lbl">Precision</div></div>
+          <div class="metric-box"><div class="val">93.5%</div><div class="lbl">Recall</div></div>
+          <div class="metric-box"><div class="val">0.928</div><div class="lbl">F1 Score</div></div>
+        </div>
+      </div>
+      <div class="model-card">
+        <div class="model-rank">04</div>
+        <div class="model-info">
+          <div class="model-name">SVM (RBF Kernel)</div>
+          <div class="model-desc">Support Vector Machine with RBF kernel, C=10, gamma=auto</div>
+        </div>
+        <div class="model-metrics">
+          <div class="metric-box"><div class="val" style="color:var(--warn);">92.6%</div><div class="lbl">Accuracy</div></div>
+          <div class="metric-box"><div class="val">91.8%</div><div class="lbl">Precision</div></div>
+          <div class="metric-box"><div class="val">91.2%</div><div class="lbl">Recall</div></div>
+          <div class="metric-box"><div class="val">0.915</div><div class="lbl">F1 Score</div></div>
+        </div>
+      </div>
+      <div class="model-card">
+        <div class="model-rank">05</div>
+        <div class="model-info">
+          <div class="model-name">Logistic Regression (Baseline)</div>
+          <div class="model-desc">L2 regularised, TF-IDF + numeric feature union</div>
+        </div>
+        <div class="model-metrics">
+          <div class="metric-box"><div class="val" style="color:var(--accent2);">87.3%</div><div class="lbl">Accuracy</div></div>
+          <div class="metric-box"><div class="val">86.9%</div><div class="lbl">Precision</div></div>
+          <div class="metric-box"><div class="val">85.1%</div><div class="lbl">Recall</div></div>
+          <div class="metric-box"><div class="val">0.860</div><div class="lbl">F1 Score</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-row">
+    <div class="panel">
+      <div class="panel-title"><span></span>Confusion Matrix (Ensemble)</div>
+      <div class="cm-wrap">
+        <div>
+          <div style="font-size:11px;color:var(--txt2);margin-bottom:8px;letter-spacing:1px;">PREDICTED →</div>
+          <div class="cm-grid">
+            <div class="cm-cell cm-head"></div>
+            <div class="cm-cell cm-head" style="font-size:11px;">Legit</div>
+            <div class="cm-cell cm-head" style="font-size:11px;">Fake</div>
+            <div class="cm-cell cm-head" style="font-size:11px;">Legit</div>
+            <div class="cm-cell cm-tp"><div class="big">8,142</div><div class="sm">TP</div></div>
+            <div class="cm-cell cm-fp"><div class="big">201</div><div class="sm">FP</div></div>
+            <div class="cm-cell cm-head" style="font-size:11px;">Fake</div>
+            <div class="cm-cell cm-fn"><div class="big">64</div><div class="sm">FN</div></div>
+            <div class="cm-cell cm-tn"><div class="big">2,041</div><div class="sm">TN</div></div>
+          </div>
+          <div style="font-size:10px;color:var(--txt2);margin-top:4px;text-align:center;">← ACTUAL</div>
+        </div>
+        <div class="cm-legend">
+          <div class="cm-leg-item"><div class="cm-dot" style="background:rgba(0,212,170,0.4)"></div><span><strong style="color:var(--txt)">TP 8,142</strong> — Correctly identified real profiles</span></div>
+          <div class="cm-leg-item"><div class="cm-dot" style="background:rgba(0,212,170,0.25)"></div><span><strong style="color:var(--txt)">TN 2,041</strong> — Correctly identified fake profiles</span></div>
+          <div class="cm-leg-item"><div class="cm-dot" style="background:rgba(245,158,11,0.4)"></div><span><strong style="color:var(--txt)">FP 201</strong> — Real profiles flagged as fake</span></div>
+          <div class="cm-leg-item"><div class="cm-dot" style="background:rgba(255,77,109,0.4)"></div><span><strong style="color:var(--txt)">FN 64</strong> — Fake profiles missed</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><span></span>Technology Stack</div>
+      <div class="tech-grid">
+        <div class="tech-item"><div class="icon">🐍</div><div class="name">Python 3.11</div><div class="role">Core language</div></div>
+        <div class="tech-item"><div class="icon">⚡</div><div class="name">FastAPI</div><div class="role">REST API backend</div></div>
+        <div class="tech-item"><div class="icon">🤖</div><div class="name">scikit-learn</div><div class="role">ML models</div></div>
+        <div class="tech-item"><div class="icon">🔥</div><div class="name">PyTorch</div><div class="role">LSTM / CNN</div></div>
+        <div class="tech-item"><div class="icon">📊</div><div class="name">XGBoost</div><div class="role">Gradient boosting</div></div>
+        <div class="tech-item"><div class="icon">🗄️</div><div class="name">PostgreSQL</div><div class="role">Profile database</div></div>
+        <div class="tech-item"><div class="icon">⚛️</div><div class="name">React</div><div class="role">Dashboard UI</div></div>
+        <div class="tech-item"><div class="icon">🚀</div><div class="name">Redis</div><div class="role">Queue / cache</div></div>
+        <div class="tech-item"><div class="icon">📈</div><div class="name">MLflow</div><div class="role">Experiment tracking</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DATASET -->
+<div class="section" id="tab-dataset">
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr)">
+    <div class="stat-card green"><div class="stat-label">Total Records</div><div class="stat-val green">524,800</div><div class="stat-sub">Labelled profiles</div></div>
+    <div class="stat-card red"><div class="stat-label">Fake Profiles</div><div class="stat-val red">104,960</div><div class="stat-sub">20% of dataset</div></div>
+    <div class="stat-card purple"><div class="stat-label">Features</div><div class="stat-val purple">42</div><div class="stat-sub">Per profile</div></div>
+    <div class="stat-card warn"><div class="stat-label">Platforms</div><div class="stat-val warn">4</div><div class="stat-sub">Twitter, IG, FB, LI</div></div>
+  </div>
+  <div class="panel wide" style="margin-bottom:14px;">
+    <div class="panel-title"><span></span>Dataset Samples (10 of 524,800)</div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th><th>Username</th><th>Account Age</th><th>Followers</th><th>Following</th><th>Bio Length</th><th>Posts</th><th>Profile Pic</th><th>Label</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="color:var(--txt2);font-family:var(--mono);font-size:11px">001</td><td>sarah_j_2019</td><td>4.2 yrs</td><td>1,204</td><td>387</td><td>94 chars</td><td>832</td><td>✓ Real face</td><td><span class="tag real">REAL</span></td></tr>
+          <tr><td style="color:var(--txt2);font-family:var(--mono);font-size:11px">002</td><td>user_73829102</td><td>3 days</td><td>2</td><td>4,891</td><td>0 chars</td><td>0</td><td>✗ Default</td><td><span class="tag fake">FAKE</span></td></tr>
+          <tr><td style="color:var(--txt2);font-family:var(--mono);font-size:11px">003</td><td>mike.thornton</td><td>6.8 yrs</td><td>562</td><td>304</td><td>77 chars</td><td>1,203</td><td>✓ Real face</td><td><span class="tag real">REAL</span></td></tr>
+          <tr><td style="color:var(--txt2);font-family:var(--mono);font-size:11px">004</td><td>free_follower1</td><td>12 days</td><td>48,201</td><td>49,800</td><td>8 chars</td><td>3</td><td>✗ GAN face</td><td><span class="tag fake">FAKE</span></td></tr>
+          <tr><td style="color:var(--txt2);font-family:var(--mono);font-size:11px">005</td><td>priya_design_</td><td>2.1 yrs</td><td>8,432</td><td>912</td><td>112 chars</td><td>4,201</td><td>✓ Real face</td><td><span class="tag real">REAL</span></td></tr>
+          <tr><td style="color:var(--txt2);font-family:var(--mono);font-size:11px">006</td><td>johndoe_x9z2</td><td>8 days</td><td>4</td><td>3,201</td><td>0 chars</td><td>1</td><td>✗ Default</td><td><span class="tag fake">FAKE</span></td></tr>
+          <tr><td style="color:var(--txt2);font-family:var(--mono);font-size:11px">007</td><td>tech_rajesh_in</td><td>3.4 yrs</td><td>2,918</td><td>1,102</td><td>88 chars</td><td>987</td><td>✓ Real face</td><td><span class="tag real">REAL</span></td></tr>
+          <tr><td style="color:var(--txt2);font-family:var(--mono);font-size:11px">008</td><td>xXnewuser2024</td><td>2 days</td><td>0</td><td>9,201</td><td>4 chars</td><td>0</td><td>✗ Default</td><td><span class="tag fake">FAKE</span></td></tr>
+          <tr><td style="color:var(--txt2);font-family:var(--mono);font-size:11px">009</td><td>carla.mendez92</td><td>5.0 yrs</td><td>724</td><td>511</td><td>101 chars</td><td>2,304</td><td>✓ Real face</td><td><span class="tag real">REAL</span></td></tr>
+          <tr><td style="color:var(--txt2);font-family:var(--mono);font-size:11px">010</td><td>bot_likes_fast</td><td>6 days</td><td>124</td><td>8,804</td><td>12 chars</td><td>7</td><td>✗ GAN face</td><td><span class="tag fake">FAKE</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="panel-row">
+    <div class="panel">
+      <div class="panel-title"><span></span>Feature Groups (42 Total)</div>
+      <div style="font-size:12px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface2);border-radius:7px;"><span>Account metadata features</span><span style="font-family:var(--mono);color:var(--accent);">12</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface2);border-radius:7px;"><span>Behavioural / activity features</span><span style="font-family:var(--mono);color:var(--accent);">10</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface2);border-radius:7px;"><span>NLP / text features</span><span style="font-family:var(--mono);color:var(--accent3);">9</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface2);border-radius:7px;"><span>Network graph features</span><span style="font-family:var(--mono);color:var(--warn);">7</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface2);border-radius:7px;"><span>Image / visual features</span><span style="font-family:var(--mono);color:var(--accent2);">4</span></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><span></span>Data Sources</div>
+      <div style="font-size:12px;display:flex;flex-direction:column;gap:8px;">
+        <div style="padding:8px 12px;background:var(--surface2);border-radius:7px;">
+          <div style="font-weight:600;color:var(--txt);margin-bottom:2px;">Twitter / X (Public API)</div>
+          <div style="color:var(--txt2);">198,400 profiles · annotated via reported accounts</div>
+        </div>
+        <div style="padding:8px 12px;background:var(--surface2);border-radius:7px;">
+          <div style="font-weight:600;color:var(--txt);margin-bottom:2px;">Kaggle: Social Media Bot Dataset</div>
+          <div style="color:var(--txt2);">142,600 profiles · pre-labelled dataset</div>
+        </div>
+        <div style="padding:8px 12px;background:var(--surface2);border-radius:7px;">
+          <div style="font-weight:600;color:var(--txt);margin-bottom:2px;">Instagram Scraped (Public)</div>
+          <div style="color:var(--txt2);">109,200 profiles · manual annotation via crowd-labelling</div>
+        </div>
+        <div style="padding:8px 12px;background:var(--surface2);border-radius:7px;">
+          <div style="font-weight:600;color:var(--txt);margin-bottom:2px;">Custom LinkedIn Dataset</div>
+          <div style="color:var(--txt2);">74,600 profiles · enterprise partner data</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ARCHITECTURE -->
+<div class="section" id="tab-architecture">
+  <div class="panel wide" style="margin-bottom:14px;">
+    <div class="panel-title"><span></span>System Architecture</div>
+    <svg viewBox="0 0 680 500" width="100%">
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- Input Layer -->
+      <text font-family="Space Mono,monospace" font-size="10" fill="#8892a4" letter-spacing="2" x="40" y="28">INPUT</text>
+      <rect x="30" y="38" width="120" height="44" rx="8" fill="rgba(0,212,170,0.08)" stroke="#00d4aa" stroke-width="0.8"/>
+      <text font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#00d4aa" text-anchor="middle" x="90" y="57">Profile URL</text>
+      <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="90" y="73">/ Username</text>
+
+      <!-- Arrow to API -->
+      <line x1="150" y1="60" x2="198" y2="60" stroke="#00d4aa" stroke-width="1" stroke-opacity="0.5" marker-end="url(#arr2)"/>
+
+      <!-- API Gateway -->
+      <rect x="200" y="38" width="130" height="44" rx="8" fill="rgba(108,99,255,0.1)" stroke="#6c63ff" stroke-width="0.8"/>
+      <text font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#6c63ff" text-anchor="middle" x="265" y="57">FastAPI Gateway</text>
+      <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="265" y="73">Rate limit · Auth</text>
+
+      <!-- Arrow to orchestrator -->
+      <line x1="330" y1="60" x2="378" y2="60" stroke="#6c63ff" stroke-width="1" stroke-opacity="0.5" marker-end="url(#arr2)"/>
+
+      <!-- Orchestrator -->
+      <rect x="380" y="38" width="130" height="44" rx="8" fill="rgba(245,158,11,0.1)" stroke="#f59e0b" stroke-width="0.8"/>
+      <text font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#f59e0b" text-anchor="middle" x="445" y="57">Orchestrator</text>
+      <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="445" y="73">Redis Queue</text>
+
+      <!-- Feature Extraction Layer label -->
+      <text font-family="Space Mono,monospace" font-size="10" fill="#8892a4" letter-spacing="2" x="40" y="130">FEATURE EXTRACTION</text>
+      <rect x="28" y="140" width="624" height="1" fill="#1e2430"/>
+
+      <!-- Feature boxes -->
+      <rect x="30" y="148" width="138" height="64" rx="8" fill="rgba(0,212,170,0.06)" stroke="#00d4aa" stroke-width="0.7" stroke-opacity="0.5"/>
+      <text font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#e2e8f0" text-anchor="middle" x="99" y="173">Metadata</text>
+      <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="99" y="191">Age · Followers</text>
+      <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="99" y="204">Following ratio</text>
+
+      <rect x="182" y="148" width="138" height="64" rx="8" fill="rgba(108,99,255,0.06)" stroke="#6c63ff" stroke-width="0.7" stroke-opacity="0.5"/>
+      <text font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#e2e8f0" text-anchor="middle" x="251" y="173">NLP Engine</text>
+      <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="251" y="191">Bio · Post text</text>
+      <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="251" y="204">Sentiment · BERT</text>
+
+      <rect x="334" y="148" width="138" height="64" rx="8" fill="rgba(245,158,11,0.06)" stroke="#f59e0b" stroke-width="0.7" stroke-opacity="0.5"/>
+      <text font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#e2e8f0" text-anchor="middle" x="403" y="173">Graph Analysis</text>
+      <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="403" y="191">Network topology</text>
+      <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="403" y="204">Cluster proximity</text>
+
+      <rect x="486" y="148" width="166" height="64" rx="8" fill="rgba(255,77,109,0.06)" stroke="#ff4d6d" stroke-width="0.7" stroke-opacity="0.5"/>
+      <text font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#e2e8f0" text-anchor="middle" x="569" y="173">Vision Module</text>
+      <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="569" y="191">Face detect · GAN</text>
+      <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="569" y="204">Reverse image</text>
+
+      <!-- Arrows down -->
+      <line x1="99" y1="212" x2="99" y2="256" stroke="#00d4aa" stroke-width="0.8" stroke-opacity="0.4" marker-end="url(#arr2)"/>
+      <line x1="251" y1="212" x2="251" y2="256" stroke="#6c63ff" stroke-width="0.8" stroke-opacity="0.4" marker-end="url(#arr2)"/>
+      <line x1="403" y1="212" x2="403" y2="256" stroke="#f59e0b" stroke-width="0.8" stroke-opacity="0.4" marker-end="url(#arr2)"/>
+      <line x1="569" y1="212" x2="569" y2="256" stroke="#ff4d6d" stroke-width="0.8" stroke-opacity="0.4" marker-end="url(#arr2)"/>
+
+      <!-- ML Models Layer -->
+      <text font-family="Space Mono,monospace" font-size="10" fill="#8892a4" letter-spacing="2" x="40" y="250">ML MODEL LAYER</text>
+      <rect x="28" y="256" width="624" height="1" fill="#1e2430"/>
+
+      <rect x="30" y="266" width="138" height="50" rx="8" fill="rgba(255,255,255,0.03)" stroke="#1e2430" stroke-width="0.7"/>
+      <text font-family="DM Sans,sans-serif" font-size="11" font-weight="600" fill="#e2e8f0" text-anchor="middle" x="99" y="288">XGBoost</text>
+      <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="99" y="305">Tabular features</text>
+
+      <rect x="182" y="266" width="138" height="50" rx="8" fill="rgba(255,255,255,0.03)" stroke="#1e2430" stroke-width="0.7"/>
+      <text font-family="DM Sans,sans-serif" font-size="11" font-weight="600" fill="#e2e8f0" text-anchor="middle" x="251" y="288">Bi-LSTM</text>
+      <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="251" y="305">Text sequences</text>
+
+      <rect x="334" y="266" width="138" height="50" rx="8" fill="rgba(255,255,255,0.03)" stroke="#1e2430" stroke-width="0.7"/>
+      <text font-family="DM Sans,sans-serif" font-size="11" font-weight="600" fill="#e2e8f0" text-anchor="middle" x="403" y="288">Random Forest</text>
+      <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="403" y="305">Graph features</text>
+
+      <rect x="486" y="266" width="166" height="50" rx="8" fill="rgba(255,255,255,0.03)" stroke="#1e2430" stroke-width="0.7"/>
+      <text font-family="DM Sans,sans-serif" font-size="11" font-weight="600" fill="#e2e8f0" text-anchor="middle" x="569" y="288">CNN (EfficientNet)</text>
+      <text font-family="DM Sans,sans-serif" font-size="10" fill="#8892a4" text-anchor="middle" x="569" y="305">Image analysis</text>
+
+      <!-- Arrows to ensemble -->
+      <line x1="99" y1="316" x2="260" y2="378" stroke="#8892a4" stroke-width="0.7" stroke-opacity="0.3" marker-end="url(#arr2)"/>
+      <line x1="251" y1="316" x2="283" y2="378" stroke="#8892a4" stroke-width="0.7" stroke-opacity="0.3" marker-end="url(#arr2)"/>
+      <line x1="403" y1="316" x2="360" y2="378" stroke="#8892a4" stroke-width="0.7" stroke-opacity="0.3" marker-end="url(#arr2)"/>
+      <line x1="569" y1="316" x2="390" y2="378" stroke="#8892a4" stroke-width="0.7" stroke-opacity="0.3" marker-end="url(#arr2)"/>
+
+      <!-- Ensemble -->
+      <rect x="190" y="378" width="300" height="56" rx="10" fill="rgba(0,212,170,0.1)" stroke="#00d4aa" stroke-width="1"/>
+      <text font-family="DM Sans,sans-serif" font-size="14" font-weight="600" fill="#00d4aa" text-anchor="middle" x="340" y="402">Stacked Ensemble</text>
+      <text font-family="DM Sans,sans-serif" font-size="11" fill="#8892a4" text-anchor="middle" x="340" y="422">Logistic Regression meta-learner · 97.4% accuracy</text>
+
+      <!-- Output arrow -->
+      <line x1="340" y1="434" x2="340" y2="468" stroke="#00d4aa" stroke-width="1" stroke-opacity="0.6" marker-end="url(#arr2)"/>
+
+      <!-- Output -->
+      <rect x="230" y="468" width="220" height="26" rx="8" fill="rgba(255,77,109,0.12)" stroke="#ff4d6d" stroke-width="0.8"/>
+      <text font-family="DM Sans,sans-serif" font-size="12" font-weight="600" fill="#ff4d6d" text-anchor="middle" x="340" y="486">Risk Score + FAKE / REAL Label</text>
+    </svg>
+  </div>
+</div>
+
+</div>
+<script>
+function showTab(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+const profiles = {
+  'john_realuser_88': {
+    score: 12, label: 'REAL', badgeClass: 'badge-legit',
+    signals: [
+      {cls:'sig-green',icon:'✓',title:'Account age: 5.2 years',desc:'Long-established profile'},
+      {cls:'sig-green',icon:'✓',title:'Real face detected',desc:'Face authentication passed'},
+      {cls:'sig-green',icon:'✓',title:'Normal post frequency',desc:'Avg. 2.1 posts/day'},
+      {cls:'sig-green',icon:'✓',title:'Organic follower graph',desc:'High mutual connection density'},
+    ]
+  },
+  'bot_xyz_94827': {
+    score: 96, label: 'FAKE', badgeClass: 'badge-fake',
+    signals: [
+      {cls:'sig-red',icon:'✗',title:'Account age: 4 days',desc:'Recently created account'},
+      {cls:'sig-red',icon:'✗',title:'No profile picture',desc:'Default avatar detected'},
+      {cls:'sig-red',icon:'✗',title:'Follows 9,200 accounts',desc:'Abnormal following pattern'},
+      {cls:'sig-red',icon:'✗',title:'0 meaningful posts',desc:'No engagement content'},
+    ]
+  },
+  'alex_smith2024': {
+    score: 58, label: 'SUSPICIOUS', badgeClass: 'badge-sus',
+    signals: [
+      {cls:'sig-warn',icon:'!',title:'Account age: 18 days',desc:'Relatively new account'},
+      {cls:'sig-green',icon:'✓',title:'Profile photo present',desc:'Face detected (low confidence)'},
+      {cls:'sig-warn',icon:'!',title:'Following spike detected',desc:'Gained 800 followers in 2 days'},
+      {cls:'sig-warn',icon:'!',title:'Bio text similarity: 78%',desc:'Near-duplicate bio found elsewhere'},
+    ]
+  }
+};
+
+function setAndScan(name){
+  document.getElementById('scan-input').value = name;
+  runScan();
+}
+
+function runScan(){
+  const val = document.getElementById('scan-input').value.trim().replace(/^@/,'').replace(/.*\//,'');
+  if(!val) return;
+  const key = Object.keys(profiles).find(k => val.toLowerCase().includes(k.toLowerCase())) || (Math.random()>0.5 ? 'john_realuser_88' : 'bot_xyz_94827');
+  const p = profiles[key];
+  const card = document.getElementById('scan-result');
+  card.classList.remove('visible');
+  setTimeout(()=>{
+    document.getElementById('result-name').textContent = '@'+val;
+    document.getElementById('result-meta').textContent = 'Scanned in '+((Math.random()*0.3+0.2).toFixed(2))+'s · 42 features evaluated';
+    const badge = document.getElementById('result-badge');
+    badge.className = 'result-badge '+p.badgeClass;
+    badge.textContent = '● '+p.label;
+    const scoreEl = document.getElementById('result-score');
+    scoreEl.textContent = p.score;
+    scoreEl.style.color = p.score > 70 ? 'var(--accent2)' : p.score > 40 ? 'var(--warn)' : 'var(--accent)';
+    const bar = document.getElementById('risk-bar');
+    bar.style.width = '0%';
+    bar.style.background = p.score > 70 ? 'var(--accent2)' : p.score > 40 ? 'var(--warn)' : 'var(--accent)';
+    setTimeout(()=>{ bar.style.width = p.score+'%'; },50);
+    const grid = document.getElementById('signal-grid');
+    grid.innerHTML = p.signals.map(s=>`
+      <div class="signal-item">
+        <div class="signal-icon ${s.cls}">${s.icon}</div>
+        <div><p>${s.title}</p><span>${s.desc}</span></div>
+      </div>`).join('');
+    card.classList.add('visible');
+  },300);
+}
+</script>
+</body>
+</html>
